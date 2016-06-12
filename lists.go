@@ -3,6 +3,7 @@ package anaconda
 import (
 	"net/url"
 	"strconv"
+	"strings"
 )
 
 // CreateList implements /lists/create.json
@@ -30,6 +31,44 @@ func (a TwitterApi) AddUserToList(screenName string, listID int64, v url.Values)
 
 	response_ch := make(chan response)
 	a.queryQueue <- query{a.baseUrl + "/lists/members/create.json", v, &addUserToListResponse, _POST, response_ch}
+	return addUserToListResponse.Users, (<-response_ch).err
+}
+
+// AddUsersToList implements /lists/members/create_all.json
+func (a TwitterApi) AddUsersToList(listID int64, userIDs []int64, v url.Values) (users []User, err error) {
+	if v == nil {
+		v = url.Values{}
+	}
+	v.Set("list_id", strconv.FormatInt(listID, 10))
+	userIDsParam := make([]string, len(userIDs))
+	for i, id := range userIDs {
+		userIDsParam[i] = strconv.FormatInt(id, 10)
+	}
+	v.Set("user_id", strings.Join(userIDsParam, ","))
+
+	var addUserToListResponse AddUserToListResponse
+
+	response_ch := make(chan response)
+	a.queryQueue <- query{a.baseUrl + "/lists/members/create_all.json", v, &addUserToListResponse, _POST, response_ch}
+	return addUserToListResponse.Users, (<-response_ch).err
+}
+
+// RemoveUsersFromList implements /lists/members/destroy_all.json
+func (a TwitterApi) RemoveUsersFromList(listID int64, userIDs []int64, v url.Values) (users []User, err error) {
+	if v == nil {
+		v = url.Values{}
+	}
+	v.Set("list_id", strconv.FormatInt(listID, 10))
+	userIDsParam := make([]string, len(userIDs))
+	for i, id := range userIDs {
+		userIDsParam[i] = strconv.FormatInt(id, 10)
+	}
+	v.Set("user_id", strings.Join(userIDsParam, ","))
+
+	var addUserToListResponse AddUserToListResponse
+
+	response_ch := make(chan response)
+	a.queryQueue <- query{a.baseUrl + "/lists/members/destroy_all.json", v, &addUserToListResponse, _POST, response_ch}
 	return addUserToListResponse.Users, (<-response_ch).err
 }
 
